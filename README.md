@@ -24,7 +24,8 @@ cd notify-me
 ```
 
 `deploy.sh` pulls the latest code, builds the app, installs it to `/Applications` and launches it.
-macOS may ask for Screen Recording permission again after each install.
+The first build creates a self-signed certificate called **NotifyMe Local Signing** in your login keychain.
+Signing with it keeps the Screen Recording permission across rebuilds, so you grant it only once.
 
 ## Updates
 
