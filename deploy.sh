@@ -2,7 +2,7 @@
 # Pull the latest version, build it, and install it to /Applications.
 set -e
 cd "$(dirname "$0")"
-# git pull --ff-only
+git pull --ff-only
 ./build.sh
 pkill -x NotifyMe || true
 rm -rf /Applications/NotifyMe.app
