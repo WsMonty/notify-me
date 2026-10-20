@@ -9,6 +9,13 @@ let sampleMax = 256              // captures are downscaled to at most this many
 let channelTolerance = 32        // per-channel difference that counts a pixel as "changed"
 let changedFraction = 0.003      // raise it if blinking cursors/spinners trigger alerts
 
+let repo = "WsMonty/notify-me"
+let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+
+func isNewer(_ a: String, than b: String) -> Bool { a.compare(b, options: .numeric) == .orderedDescending }
+
+struct Tag: Decodable { let name: String }
+
 enum Target {
     case window(CGWindowID)
     case area(CGDirectDisplayID, CGRect) // display-relative, top-left origin, points
@@ -120,6 +127,7 @@ final class Controller: NSObject, UNUserNotificationCenterDelegate {
     var timer: Timer?
     var last: [UInt8]?
     var busy = false
+    let updateItem = NSMenuItem(title: "", action: #selector(runDeploy), keyEquivalent: "")
     var watchedWindow: CGWindowID?
     let outline: NSWindow = {
         let w = NSWindow(contentRect: .zero, styleMask: .borderless, backing: .buffered, defer: false)
@@ -142,6 +150,12 @@ final class Controller: NSObject, UNUserNotificationCenterDelegate {
         super.init()
         let menu = NSMenu()
         menu.addItem(withTitle: "Select… (⌃⌥⌘W)", action: #selector(toggle), keyEquivalent: "").target = self
+        updateItem.target = self
+        updateItem.isHidden = true
+        menu.addItem(updateItem)
+        menu.addItem(withTitle: "Check for Updates", action: #selector(checkNow), keyEquivalent: "").target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Notify Me \(currentVersion)", action: nil, keyEquivalent: "")
         menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         status.menu = menu
         updateIcon()
@@ -149,6 +163,44 @@ final class Controller: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
         if !CGPreflightScreenCaptureAccess() { CGRequestScreenCaptureAccess() }
+
+        checkForUpdates(manual: false)
+        Timer.scheduledTimer(withTimeInterval: 24 * 3600, repeats: true) { _ in
+            MainActor.assumeIsolated { controller.checkForUpdates(manual: false) }
+        }
+    }
+
+    @objc func checkNow() { checkForUpdates(manual: true) }
+
+    // Newest git tag on GitHub vs. the tag this copy was built from.
+    func checkForUpdates(manual: Bool) {
+        Task { @MainActor in
+            guard let (data, _) = try? await URLSession.shared.data(from: URL(string: "https://api.github.com/repos/\(repo)/tags?per_page=100")!),
+                  let tags = try? JSONDecoder().decode([Tag].self, from: data) else {
+                if manual { notify("Couldn't check for updates", "Is your internet connection working?") }
+                return
+            }
+            guard let latest = tags.map(\.name).max(by: { isNewer($1, than: $0) }), isNewer(latest, than: currentVersion) else {
+                if manual { notify("You're up to date", "Notify Me \(currentVersion) is the latest version.") }
+                return
+            }
+            updateItem.title = "Update to \(latest)…"
+            updateItem.isHidden = false
+            if manual || UserDefaults.standard.string(forKey: "notifiedVersion") != latest {
+                UserDefaults.standard.set(latest, forKey: "notifiedVersion")
+                notify("Notify Me \(latest) is available", "Choose “Update to \(latest)…” in the menu bar, or run ./deploy.sh.")
+            }
+        }
+    }
+
+    // Runs deploy.sh from the clone this app was built from, in Terminal.
+    @objc func runDeploy() {
+        guard let src = Bundle.main.object(forInfoDictionaryKey: "NotifyMeSource") as? String,
+              FileManager.default.isExecutableFile(atPath: src + "/deploy.sh") else {
+            notify("Can't find the source folder", "Run ./deploy.sh in your notify-me folder.")
+            return
+        }
+        try? Process.run(URL(fileURLWithPath: "/usr/bin/open"), arguments: ["-a", "Terminal", src + "/deploy.sh"])
     }
 
     func updateIcon() {
@@ -306,6 +358,9 @@ if CommandLine.arguments.contains("--selftest") {
     for i in stride(from: 0, to: 400 * 4, by: 4) { b[i] = 255 } // 4% of pixels
     precondition(changed(a, b))
     precondition(changed(a, []))            // resize
+    precondition(isNewer("v1.10.0", than: "v1.9.3"))
+    precondition(!isNewer("v1.0.0", than: "v1.0.0"))
+    precondition(isNewer("v1.0.0", than: "dev"))
     print("ok"); exit(0)
 }
 

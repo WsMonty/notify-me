@@ -2,7 +2,7 @@
 set -e
 cd "$(dirname "$0")"
 APP=NotifyMe.app
-VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
+VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo dev)
 mkdir -p $APP/Contents/MacOS $APP/Contents/Resources
 # app icon from icon/icon.png (regenerate the png with: swift icon/make-icon.swift)
 ICONSET=/tmp/NotifyMe.iconset
@@ -28,6 +28,7 @@ cat > $APP/Contents/Info.plist <<EOF
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
+  <key>NotifyMeSource</key><string>$PWD</string>
 </dict></plist>
 EOF
 codesign --force -s - $APP

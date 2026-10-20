@@ -20,14 +20,39 @@ Requires macOS 14+ and the Xcode Command Line Tools (`xcode-select --install`).
 ```sh
 git clone https://github.com/WsMonty/notify-me.git
 cd notify-me
-./build.sh
-mv NotifyMe.app /Applications/ && open /Applications/NotifyMe.app
+./deploy.sh
 ```
 
-To update: `git pull && ./build.sh`, then replace the app in Applications.
-macOS may ask for Screen Recording permission again after each rebuild.
+`deploy.sh` pulls the latest code, builds the app, installs it to `/Applications` and launches it.
+macOS may ask for Screen Recording permission again after each install.
+
+## Updates
+
+Notify Me checks GitHub for a new version on launch and once a day. When one is out, you get a
+notification and the menu bar shows **Update to vX…**. Click it to run `deploy.sh` in Terminal,
+or run it yourself:
+
+```sh
+cd notify-me && ./deploy.sh
+```
+
+**Check for Updates** in the menu checks right away.
+
+## Build without installing
+
+```sh
+./build.sh && open NotifyMe.app
+```
 
 Sensitivity knobs are at the top of `main.swift`.
+
+## Releasing a new version
+
+Users are notified about new **tags**, not every commit:
+
+```sh
+git tag v1.1.0 && git push origin v1.1.0
+```
 
 ## License
 
