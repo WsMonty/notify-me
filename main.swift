@@ -292,8 +292,8 @@ final class Controller: NSObject, NSApplicationDelegate, UNUserNotificationCente
                 config.height = max(1, Int(size.height * scale))
 
                 last = nil
-                timer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-                    MainActor.assumeIsolated { self?.tick(filter, config) }
+                timer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { _ in
+                    MainActor.assumeIsolated { controller.tick(filter, config) }
                 }
                 updateIcon()
             } catch {
