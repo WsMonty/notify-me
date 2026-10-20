@@ -31,5 +31,18 @@ cat > $APP/Contents/Info.plist <<EOF
   <key>NotifyMeSource</key><string>$PWD</string>
 </dict></plist>
 EOF
-codesign --force -s - $APP
+# Sign with a stable self-signed cert so macOS keeps the Screen Recording permission across rebuilds
+# (ad-hoc signatures change every build, and macOS then treats the app as new).
+IDENTITY="NotifyMe Local Signing"
+if ! security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
+  echo "Creating local code-signing certificate \"$IDENTITY\" in your login keychain (one time)..."
+  TMP=$(mktemp -d)
+  /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -subj "/CN=$IDENTITY" \
+    -addext "extendedKeyUsage=codeSigning" -addext "keyUsage=digitalSignature" \
+    -keyout $TMP/key.pem -out $TMP/cert.pem 2>/dev/null
+  /usr/bin/openssl pkcs12 -export -inkey $TMP/key.pem -in $TMP/cert.pem -out $TMP/id.p12 -passout pass:notifyme
+  security import $TMP/id.p12 -k ~/Library/Keychains/login.keychain-db -P notifyme -T /usr/bin/codesign >/dev/null
+  rm -rf $TMP
+fi
+codesign --force -s "$IDENTITY" $APP
 echo "Built $APP ($VERSION) — run: open $APP"
