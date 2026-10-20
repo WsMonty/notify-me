@@ -88,7 +88,8 @@ final class OverlayView: NSView {
         NSColor(white: 0, alpha: 0.3).setFill()
         bounds.fill()
         guard let hole = selection ?? (start == nil ? hover?.1 : nil) else { return }
-        NSColor.clear.setFill()
+        // Not fully clear: macOS passes clicks on fully transparent pixels through to the window below.
+        NSColor.systemBlue.withAlphaComponent(0.12).setFill()
         hole.fill(using: .copy)
         NSColor.systemBlue.setStroke()
         let path = NSBezierPath(rect: hole)
@@ -216,6 +217,7 @@ final class Controller: NSObject, UNUserNotificationCenterDelegate {
             w.level = .screenSaver
             w.backgroundColor = .clear
             w.isOpaque = false
+            w.ignoresMouseEvents = false
             w.animationBehavior = .none
             w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             w.contentView = OverlayView(screen: screen) { [weak self] target in
@@ -260,13 +262,13 @@ final class Controller: NSObject, UNUserNotificationCenterDelegate {
                 config.showsCursor = false
                 switch target {
                 case .window(let id):
-                    guard let w = content.windows.first(where: { $0.windowID == id }) else { return }
+                    guard let w = content.windows.first(where: { $0.windowID == id }) else { throw CocoaError(.fileNoSuchFile) }
                     filter = SCContentFilter(desktopIndependentWindow: w)
                     size = w.frame.size
                     watchedWindow = id
                     showOutline(w.frame)
                 case .area(let id, let rect):
-                    guard let d = content.displays.first(where: { $0.displayID == id }) else { return }
+                    guard let d = content.displays.first(where: { $0.displayID == id }) else { throw CocoaError(.fileNoSuchFile) }
                     filter = SCContentFilter(display: d, excludingWindows: [])
                     config.sourceRect = rect
                     size = rect.size
