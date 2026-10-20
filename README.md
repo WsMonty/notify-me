@@ -15,25 +15,19 @@ Needs **Screen Recording** permission (System Settings → Privacy & Security). 
 
 ## Install
 
-Download `NotifyMe.zip` from [Releases](../../releases), unzip, move to Applications.
-The app isn't notarized, so the first time: right-click → **Open**, or run
-`xattr -dr com.apple.quarantine /Applications/NotifyMe.app`.
-
-## Build from source
+Requires macOS 14+ and the Xcode Command Line Tools (`xcode-select --install`).
 
 ```sh
-./build.sh && open NotifyMe.app
+git clone https://github.com/WsMonty/notify-me.git
+cd notify-me
+./build.sh
+mv NotifyMe.app /Applications/ && open /Applications/NotifyMe.app
 ```
+
+To update: `git pull && ./build.sh`, then replace the app in Applications.
+macOS may ask for Screen Recording permission again after each rebuild.
 
 Sensitivity knobs are at the top of `main.swift`.
-
-## Release
-
-```sh
-git tag v1.0.0 && git push origin v1.0.0
-```
-
-GitHub Actions builds the app and attaches `NotifyMe.zip` to a new release.
 
 ## License
 

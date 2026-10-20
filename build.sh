@@ -2,7 +2,7 @@
 set -e
 cd "$(dirname "$0")"
 APP=NotifyMe.app
-VERSION=${VERSION:-dev}
+VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
 mkdir -p $APP/Contents/MacOS $APP/Contents/Resources
 # app icon from icon/icon.png (regenerate the png with: swift icon/make-icon.swift)
 ICONSET=/tmp/NotifyMe.iconset
