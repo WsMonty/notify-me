@@ -11,6 +11,8 @@ A tiny macOS menu-bar app that watches a window or screen area and plays a sound
 3. A red outline marks what's watched. When it changes you hear a sound and get a notification.
 4. Press **⌃⌥⌘W** again to stop early.
 
+Don't want the icon? Choose **Hide Menu Bar Icon** in its menu. The hotkey keeps working. Open Notify Me again (Spotlight, Finder) to bring the icon back.
+
 Needs **Screen Recording** permission (System Settings → Privacy & Security). macOS 14+.
 
 ## Install

@@ -122,7 +122,7 @@ func changed(_ a: [UInt8], _ b: [UInt8]) -> Bool {
 
 // MARK: - App
 
-final class Controller: NSObject, UNUserNotificationCenterDelegate {
+final class Controller: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     let status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     var overlays: [NSWindow] = []
     var timer: Timer?
@@ -155,6 +155,7 @@ final class Controller: NSObject, UNUserNotificationCenterDelegate {
         updateItem.isHidden = true
         menu.addItem(updateItem)
         menu.addItem(withTitle: "Check for Updates", action: #selector(checkNow), keyEquivalent: "").target = self
+        menu.addItem(withTitle: "Hide Menu Bar Icon", action: #selector(hideIcon), keyEquivalent: "").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Notify Me \(currentVersion)", action: nil, keyEquivalent: "")
         menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -169,6 +170,17 @@ final class Controller: NSObject, UNUserNotificationCenterDelegate {
         Timer.scheduledTimer(withTimeInterval: 24 * 3600, repeats: true) { _ in
             MainActor.assumeIsolated { controller.checkForUpdates(manual: false) }
         }
+    }
+
+    // AppKit persists isVisible itself (via the item's autosaveName). Opening the app again brings the icon back.
+    @objc func hideIcon() {
+        status.isVisible = false
+        notify("Menu bar icon hidden", "⌃⌥⌘W still works. Open Notify Me again to bring the icon back.")
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        status.isVisible = true
+        return false
     }
 
     @objc func checkNow() { checkForUpdates(manual: true) }
@@ -369,5 +381,6 @@ if CommandLine.arguments.contains("--selftest") {
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 let controller = Controller()
+app.delegate = controller
 registerHotkey()
 app.run()
