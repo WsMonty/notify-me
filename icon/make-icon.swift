@@ -21,42 +21,34 @@ ctx.addPath(bodyPath); ctx.setFillColor(rgb(0x7C6CF7)); ctx.fillPath()
 ctx.restoreGState()
 ctx.saveGState()
 ctx.addPath(bodyPath); ctx.clip()
-ctx.drawLinearGradient(gradient(rgb(0xB3A8FF), rgb(0x6F5CF2)), start: CGPoint(x: 300, y: 924), end: CGPoint(x: 724, y: 100), options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+ctx.drawLinearGradient(gradient(rgb(0xB9AEFF), rgb(0x7462F5)), start: CGPoint(x: 300, y: 924), end: CGPoint(x: 724, y: 100), options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
 ctx.restoreGState()
 
-// Eye: soft almond with rounded tips (fill + thick round-joined stroke)
-let c = CGPoint(x: 512, y: 500), half: CGFloat = 250, bulge: CGFloat = 230
-let eye = CGMutablePath()
-eye.move(to: CGPoint(x: c.x - half, y: c.y))
-eye.addCurve(to: CGPoint(x: c.x + half, y: c.y), control1: CGPoint(x: c.x - half * 0.55, y: c.y + bulge), control2: CGPoint(x: c.x + half * 0.55, y: c.y + bulge))
-eye.addCurve(to: CGPoint(x: c.x - half, y: c.y), control1: CGPoint(x: c.x + half * 0.55, y: c.y - bulge), control2: CGPoint(x: c.x - half * 0.55, y: c.y - bulge))
-eye.closeSubpath()
-ctx.saveGState()
-ctx.setShadow(offset: CGSize(width: 0, height: -14), blur: 30, color: rgb(0x3B2AA8, 0.28))
-ctx.beginTransparencyLayer(auxiliaryInfo: nil) // one shadow for fill + stroke together
-ctx.addPath(eye); ctx.setFillColor(rgb(0xFFFFFF)); ctx.setStrokeColor(rgb(0xFFFFFF))
-ctx.setLineWidth(70); ctx.setLineJoin(.round)
-ctx.drawPath(using: .fillStroke)
-ctx.endTransparencyLayer()
-ctx.restoreGState()
+// Two round eyes glancing up at the notification dot
+let pupilShift = CGPoint(x: 20, y: 28)
+for x in [CGFloat(404), 620] {
+    let e = CGRect(x: x - 92, y: 380, width: 184, height: 224)
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -12), blur: 26, color: rgb(0x3B2AA8, 0.25))
+    ctx.setFillColor(rgb(0xFFFFFF))
+    ctx.fillEllipse(in: e)
+    ctx.restoreGState()
+    let p = CGPoint(x: e.midX + pupilShift.x, y: e.midY + pupilShift.y)
+    ctx.saveGState()
+    ctx.addEllipse(in: e.insetBy(dx: 10, dy: 10)); ctx.clip() // keep pupils inside the eye
+    ctx.setFillColor(rgb(0x221D4A))
+    ctx.fillEllipse(in: circle(p, 54))
+    ctx.restoreGState()
+    ctx.setFillColor(rgb(0xFFFFFF))
+    ctx.fillEllipse(in: circle(CGPoint(x: p.x + 18, y: p.y + 20), 16))
+}
 
-// Big round pupil + two sparkles
-let p = CGPoint(x: c.x, y: c.y - 6)
+// Notification dot with a soft glow
+let d = CGPoint(x: 742, y: 742)
+ctx.drawRadialGradient(gradient(rgb(0xFF7A90, 0.45), rgb(0xFF7A90, 0)), startCenter: d, startRadius: 30, endCenter: d, endRadius: 110, options: [])
 ctx.saveGState()
-ctx.addEllipse(in: circle(p, 128)); ctx.clip()
-ctx.drawLinearGradient(gradient(rgb(0x3A3470), rgb(0x1A1638)), start: CGPoint(x: p.x, y: p.y + 128), end: CGPoint(x: p.x, y: p.y - 128), options: [])
-ctx.restoreGState()
-ctx.setFillColor(rgb(0xFFFFFF))
-ctx.fillEllipse(in: circle(CGPoint(x: p.x + 46, y: p.y + 50), 38))
-ctx.fillEllipse(in: circle(CGPoint(x: p.x - 50, y: p.y - 52), 16))
-
-// Notification dot
-let d = CGPoint(x: 738, y: 708)
-ctx.setFillColor(rgb(0xFFFFFF))
-ctx.fillEllipse(in: circle(d, 66))
-ctx.saveGState()
-ctx.addEllipse(in: circle(d, 50)); ctx.clip()
-ctx.drawLinearGradient(gradient(rgb(0xFF9AA8), rgb(0xFF5A78)), start: CGPoint(x: d.x, y: d.y + 50), end: CGPoint(x: d.x, y: d.y - 50), options: [])
+ctx.addEllipse(in: circle(d, 48)); ctx.clip()
+ctx.drawLinearGradient(gradient(rgb(0xFFA0AE), rgb(0xFF5C7A)), start: CGPoint(x: d.x, y: d.y + 48), end: CGPoint(x: d.x, y: d.y - 48), options: [])
 ctx.restoreGState()
 
 let url = URL(fileURLWithPath: CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "icon/icon.png")
